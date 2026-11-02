@@ -1,200 +1,203 @@
-## EXP:01 Ideal, Natural, & Flat-top -Sampling
-
-## NAME: RAJA S
-## REG NO: 212224060201
+# Ideal, Natural, & Flat-top -Sampling
 # Aim
 Write a simple Python program for the construction and reconstruction of ideal, natural, and flattop sampling.
-# Tools required
-Google Colab
+# Software required
+Google Collab
+
+# Theory
+
+# Ideal or Instantaneous or Impulse Sampling:
+sampling signal is a periodic impulse train. The area of each impulse in the sampled signal is equal to the instantaneous value of the input signal.
+
+# Natural Sampling:
+Natural sampling is also called practical sampling. In this sampling technique, the sampling signal is a pulse train.
+In natural sampling method, the top of each pulse in the sampled signal retains the shape of the input signal during pulse interval.
+
+# Flat Top Sampling:
+The flat top sampling is also the practical sampling technique. In the flat top sampling, the sampling signal is also a pulse train. The top of each pulse in the sampled signal remain constant and is equal to the instantaneous value of the input signal 𝑥(𝑛) at the start of the samples.
+
 # Program
 
-# IDEAL SAMPLING
-
-```
 # Impulse Sampling
+```sci
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import resample
+
+# Parameters
 fs = 100
-t = np.arange(0, 1, 1/fs)
+T = 1
 f = 5
+
+# Time
+t = np.arange(0, T, 1/fs)
+
+# Signal
 signal = np.sin(2 * np.pi * f * t)
-plt.figure(figsize=(10, 4))
-plt.suptitle("NAME : RAJANAYAGAM K\nREG NO : 212224060202",fontsize=12, fontweight='bold', y=1.05)
-plt.plot(t, signal, label='Continuous Signal')
-plt.title('Continuous Signal (fs = 100 Hz)')
-plt.xlabel('Time [s]')
-plt.ylabel('Amplitude')
-plt.grid(True)
-plt.legend()
+
+# Plot Continuous Signal
+plt.figure()
+plt.plot(t, signal)
+plt.title("Continuous Signal")
+plt.grid()
 plt.show()
-t_sampled = np.arange(0, 1, 1/fs)
+
+# Sampling
+t_sampled = np.arange(0, T, 1/fs)
 signal_sampled = np.sin(2 * np.pi * f * t_sampled)
-plt.figure(figsize=(10, 4))
-plt.plot(t, signal, label='Continuous Signal', alpha=0.7)
-plt.stem(t_sampled, signal_sampled, linefmt='r-', markerfmt='ro',
-basefmt='r-', label='Sampled Signal (fs = 100 Hz)')
-plt.title('Sampling of Continuous Signal (fs = 100 Hz)')
-plt.xlabel('Time [s]')
-plt.ylabel('Amplitude')
-plt.grid(True)
-plt.legend()
+
+# Plot Sampled Signal
+plt.figure()
+plt.stem(t_sampled, signal_sampled)
+plt.title("Impulse Sampling")
+plt.grid()
 plt.show()
-reconstructed_signal = resample(signal_sampled, len(t))
-plt.figure(figsize=(10, 4))
-# plt.plot(t, signal, label='Continuous Signal', alpha=0.7)
-plt.plot(t, reconstructed_signal, 'r--', label='Reconstructed Signal (fs = 100 Hz)')
-plt.title('Reconstruction of Sampled Signal (fs = 100 Hz)')
-plt.xlabel('Time [s]')
-plt.ylabel('Amplitude')
-plt.grid(True)
-plt.legend()
+
+# Reconstruction
+reconstructed = resample(signal_sampled, len(t))
+
+plt.figure()
+plt.plot(t, reconstructed)
+plt.title("Reconstructed Signal")
+plt.grid()
 plt.show()
 ```
-
-# NATURAL SAMPLING
-
-```
+# Natural Sampling
+```sci
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, lfilter
-fs = 1000  # Sampling frequency (samples per second)
-T = 1  # Duration in seconds
-t = np.arange(0, T, 1/fs)  # Time vector
-fm = 5  # Frequency of message signal (Hz)
-message_signal = np.sin(2 * np.pi * fm * t)
-pulse_rate = 50  # pulses per second
+
+# Parameters
+fs = 1000
+T = 1
+fm = 5
+
+t = np.arange(0, T, 1/fs)
+
+# Message Signal
+message = np.sin(2 * np.pi * fm * t)
+
+# Pulse Train
+pulse_rate = 50
 pulse_train = np.zeros_like(t)
+
 pulse_width = int(fs / pulse_rate / 2)
+
 for i in range(0, len(t), int(fs / pulse_rate)):
     pulse_train[i:i+pulse_width] = 1
-nat_signal = message_signal * pulse_train
-sampled_signal = nat_signal[pulse_train == 1]
-sample_times = t[pulse_train == 1]
-# # Interpolation - Zero-Order Hold (just for visualization)
-reconstructed_signal = np.zeros_like(t)
-for i, time in enumerate(sample_times):
-    index = np.argmin(np.abs(t - time))
-    reconstructed_signal[index:index+pulse_width] = sampled_signal[i]
-def lowpass_filter(signal, cutoff, fs, order=5):
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+
+# Natural Sampling
+natural_signal = message * pulse_train
+
+# Low-pass Filter
+def lowpass(signal, cutoff, fs):
+    nyq = 0.5 * fs
+    normal = cutoff / nyq
+    b, a = butter(5, normal, btype='low')
     return lfilter(b, a, signal)
-reconstructed_signal = lowpass_filter(reconstructed_signal,10, fs)
-plt.figure(figsize=(14, 10))
-plt.suptitle("NAME : RAJANAYAGAM K\nREG NO : 212224060202",
-             fontsize=12, fontweight='bold')
-plt.subplot(4, 1, 1)
-plt.plot(t, message_signal, label='Original Message Signal')
-plt.legend()
-plt.grid(True)
-plt.subplot(4, 1, 2)
-plt.plot(t, pulse_train, label='Pulse Train')
-plt.legend()
-plt.grid(True)
-plt.subplot(4, 1, 3)
-plt.plot(t, nat_signal, label='Natural Sampling')
-plt.legend()
-plt.grid(True)
-plt.subplot(4, 1, 4)
-plt.plot(t, reconstructed_signal, label='Reconstructed Message Signal',
-color='green')
-plt.legend()
-plt.grid(True)
+
+reconstructed = lowpass(natural_signal, 10, fs)
+
+# Plots
+plt.figure(figsize=(10,8))
+
+plt.subplot(4,1,1)
+plt.plot(t, message)
+plt.title("Original Signal")
+
+plt.subplot(4,1,2)
+plt.plot(t, pulse_train)
+plt.title("Pulse Train")
+
+plt.subplot(4,1,3)
+plt.plot(t, natural_signal)
+plt.title("Natural Sampling")
+
+plt.subplot(4,1,4)
+plt.plot(t, reconstructed)
+plt.title("Reconstructed Signal")
+
 plt.tight_layout()
 plt.show()
 ```
 
-# FLAT-TOP SAMPLING
-
-```
+# Flat-Top Sampling
+```sci
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, lfilter
-fs = 1000  # Sampling frequency (samples per second)
-T = 1      # Duration in seconds
-t = np.arange(0, T, 1/fs)  # Time vector
-fm = 5     # Frequency of message signal (Hz)
-message_signal = np.sin(2 * np.pi * fm * t)
-pulse_rate = 50  # pulses per second
-pulse_train_indices = np.arange(0, len(t), int(fs / pulse_rate))
-pulse_train = np.zeros_like(t)
-pulse_train[pulse_train_indices] = 1
-flat_top_signal = np.zeros_like(t)
-sample_times = t[pulse_train_indices]
-pulse_width_samples = int(fs / (2 * pulse_rate)) # Adjust pulse width as needed
-for i, sample_time in enumerate(sample_times):
-    index = np.argmin(np.abs(t - sample_time))
-    if index < len(message_signal):
-        sample_value = message_signal[index]
-        start_index = index
-        end_index = min(index + pulse_width_samples, len(t))
-        flat_top_signal[start_index:end_index] = sample_value
 
-def lowpass_filter(signal, cutoff, fs, order=5):
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+# Parameters
+fs = 1000
+T = 1
+fm = 5
+
+t = np.arange(0, T, 1/fs)
+
+# Message Signal
+message = np.sin(2 * np.pi * fm * t)
+
+# Sampling
+pulse_rate = 50
+indices = np.arange(0, len(t), int(fs / pulse_rate))
+
+flat_signal = np.zeros_like(t)
+
+pulse_width = int(fs / (2 * pulse_rate))
+
+# Flat-top Sampling
+for i in indices:
+    value = message[i]
+    flat_signal[i:i+pulse_width] = value
+
+# Low-pass Filter
+def lowpass(signal, cutoff, fs):
+    nyq = 0.5 * fs
+    normal = cutoff / nyq
+    b, a = butter(5, normal, btype='low')
     return lfilter(b, a, signal)
 
-cutoff_freq = 2 * fm  # Nyquist rate or slightly higher
-reconstructed_signal = lowpass_filter(flat_top_signal, cutoff_freq, fs)
+reconstructed = lowpass(flat_signal, 10, fs)
 
-plt.figure(figsize=(14, 10))
-plt.suptitle("NAME : RAJANAYAGAM K\nREG NO : 212224060202",
-             fontsize=12, fontweight='bold')
+# Plots
+plt.figure(figsize=(10,8))
 
-plt.subplot(4, 1, 1)
-plt.plot(t, message_signal, label='Original Message Signal')
-plt.title('Original Message Signal')
-plt.xlabel('Time (s)')
-plt.ylabel('Amplitude')
-plt.legend()
-plt.grid(True)
+plt.subplot(4,1,1)
+plt.plot(t, message)
+plt.title("Original Signal")
 
-plt.subplot(4, 1, 2)
-plt.stem(t[pulse_train_indices], pulse_train[pulse_train_indices], basefmt=" ",
-label='Ideal Sampling Instances')
-plt.title('Ideal Sampling Instances')
-plt.xlabel('Time (s)')
-plt.ylabel('Amplitude')
-plt.legend()
-plt.grid(True)
-plt.subplot(4, 1, 3)
-plt.plot(t, flat_top_signal, label='Flat-Top Sampled Signal')
-plt.title('Flat-Top Sampled Signal')
-plt.xlabel('Time (s)')
-plt.ylabel('Amplitude')
-plt.grid(True)
-plt.legend()
-plt.subplot(4, 1, 4)
-plt.plot(t, reconstructed_signal, label=f'Reconstructed Signal (Low-pass Filter, Cutoff={cutoff_freq} Hz)', color='green')
-plt.title('Reconstructed Signal')
-plt.xlabel('Time (s)')
-plt.ylabel('Amplitude')
-plt.legend()
-plt.grid(True)
+plt.subplot(4,1,2)
+plt.stem(t[indices], np.ones_like(indices))
+plt.title("Sampling Points")
+
+plt.subplot(4,1,3)
+plt.plot(t, flat_signal)
+plt.title("Flat-Top Sampling")
+
+plt.subplot(4,1,4)
+plt.plot(t, reconstructed)
+plt.title("Reconstructed Signal")
+
 plt.tight_layout()
 plt.show()
+
+
 ```
 # Output Waveform
+# Ideal sampling
+<img width="568" height="435" alt="dc_exp1_1" src="https://github.com/user-attachments/assets/3d52fdb6-a59f-46f1-8147-9d367ad48b98" />
+<img width="568" height="435" alt="dc_exp1_2" src="https://github.com/user-attachments/assets/2a64a7a5-29ec-4baf-a598-0756776ac2d9" />
+<img width="568" height="435" alt="dc_exp1_3" src="https://github.com/user-attachments/assets/7089cc34-1d0a-4d4b-85ff-b45259c77164" />
 
-# IDEAL SAMPLING
-<img width="815" height="1158" alt="image" src="https://github.com/user-attachments/assets/3d48530f-1195-4ed2-b3fb-b3ccb012c054" />
+# Natural sampling
+<img width="1238" height="985" alt="Screenshot 2026-01-30 140226" src="https://github.com/user-attachments/assets/7f56c4a7-0a0a-4acf-a979-cbef6dc3e4a7" />
 
-
-
-
-# NATURAL SAMPLING
-<img width="1390" height="985" alt="image" src="https://github.com/user-attachments/assets/cdfaf68f-3cbf-412e-aa76-c22098e32075" />
-
-
-# FLAT-TOP SAMPLING
-
-<img width="1398" height="985" alt="image" src="https://github.com/user-attachments/assets/6e9679d9-2a2d-47af-8f21-a73d05937142" />
-
+# Front top sampling
+<img width="1232" height="981" alt="Screenshot 2026-01-30 140241" src="https://github.com/user-attachments/assets/33c77fab-fe7f-43a6-992d-75c2aecab98e" />
 
 
 # Results
+
 Thus, the construction and reconstruction of Ideal, Natural, and Flat-top sampling were successfully implemented using Python, and the corresponding waveforms were obtained.
+
